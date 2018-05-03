@@ -53,7 +53,7 @@ func (m *PersonDAO) Delete(id string) error {
 }
 
 
-func (m *PersonDAO) Update(person Person) error {
-	err := db.C(COLLECTION).UpdateId(person.ID, &person)
+func (m *PersonDAO) Update(id string, person Person) error {
+	err := db.C(COLLECTION).Update(bson.M{"_id": bson.ObjectIdHex(id)}, &person)
 	return err
 }

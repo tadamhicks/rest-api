@@ -25,18 +25,21 @@ func GetPeople(w http.ResponseWriter, r *http.Request) {
 }
 
 
+
 func UpdatePerson(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
 	defer r.Body.Close()
 	var person Person
 	if err := json.NewDecoder(r.Body).Decode(&person); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
-	if err := dao.Update(person); err != nil {
+	if err := dao.Update(params["id"], person); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
 	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
 }
+
 
 func GetPerson(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
@@ -73,21 +76,6 @@ func DeletePerson(w http.ResponseWriter, r *http.Request) {
 	}
 	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
 }
-/*
-func DeletePerson(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	var person Person
-	if err := json.NewDecoder(r.Body).Decode(&person); err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
-	if err := dao.Delete(person); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
-}
-*/
 
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
@@ -112,7 +100,7 @@ func init() {
 func main() {
 	router := mux.NewRouter()
 	router.HandleFunc("/people", GetPeople).Methods("GET")
-	router.HandleFunc("/people", UpdatePerson).Methods("PUT")
+	router.HandleFunc("/people/{id}", UpdatePerson).Methods("PUT")
 	router.HandleFunc("/people/{id}", GetPerson).Methods("GET")
 	router.HandleFunc("/people", CreatePerson).Methods("POST")
 	router.HandleFunc("/people/{id}", DeletePerson).Methods("DELETE")
