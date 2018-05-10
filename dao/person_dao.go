@@ -5,11 +5,14 @@ import (
 	. "github.com/tadamhicks/rest-api/models"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
 type PersonDAO struct {
 	Server		string
 	Database	string
+	Username	string
+	Password	string
 }
 
 var db *mgo.Database
@@ -19,7 +22,16 @@ const (
 )
 
 func (m *PersonDAO) Connect() {
-	session, err := mgo.Dial(m.Server)
+
+	dialInfo := &mgo.DialInfo {
+		Addrs: []string{m.Server},
+		Timeout: 60 * time.Second,
+		Database: m.Database,
+		Username: m.Username,
+		Password: m.Password,
+	}
+
+	session, err := mgo.DialWithInfo(dialInfo)
 	if err != nil {
 		log.Fatal(err)
 	}

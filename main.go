@@ -94,6 +94,8 @@ func init() {
 	config.Read()
 	dao.Server = config.Server
 	dao.Database = config.Database
+	dao.Username = config.Username
+	dao.Password = config.Password
 	dao.Connect()
 }
 

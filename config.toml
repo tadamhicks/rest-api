@@ -1,2 +1,4 @@
-server="localhost"
+server="10.30.21.201:10004"
 database="person_db"
+username="peopleuser"
+password="password"
