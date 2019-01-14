@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/gorilla/mux"
+	"github.com/dgrijalva/jwt-go"
+	"time"
+	"github.com/auth0/go-jwt-middleware"
 	. "github.com/tadamhicks/rest-api/config"
 	. "github.com/tadamhicks/rest-api/dao"
 	. "github.com/tadamhicks/rest-api/models"
@@ -14,19 +17,40 @@ import (
 
 var config = Config{}
 var dao = PersonDAO{}
+var mySigningKey = []byte("secret")
 
-func GetPeople(w http.ResponseWriter, r *http.Request) {
+
+var GetToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+    claims["admin"] = true
+    claims["name"] = "Ado Kukic"
+	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
+	tokenString, _ := token.SignedString(mySigningKey)
+	w.Write([]byte(tokenString))
+})
+
+
+var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
+	ValidationKeyGetter: func(token *jwt.Token) (interface{}, error) {
+	  return mySigningKey, nil
+	},
+	SigningMethod: jwt.SigningMethodHS256,
+})
+
+
+var GetPeople = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	person, err := dao.FindAll()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	respondWithJson(w, http.StatusOK, person)
-}
+})
 
 
 
-func UpdatePerson(w http.ResponseWriter, r *http.Request) {
+var UpdatePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	defer r.Body.Close()
 	var person Person
@@ -38,10 +62,10 @@ func UpdatePerson(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
 	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
-}
+})
 
 
-func GetPerson(w http.ResponseWriter, r *http.Request) {
+var GetPerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	person, err := dao.FindById(params["id"])
 	if err != nil {
@@ -49,9 +73,9 @@ func GetPerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJson(w, http.StatusOK, person)
-}
+})
 
-func CreatePerson(w http.ResponseWriter, r *http.Request) {
+var CreatePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	var person Person
 	if err := json.NewDecoder(r.Body).Decode(&person); err != nil {
@@ -64,10 +88,10 @@ func CreatePerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJson(w, http.StatusCreated, person)
-}
+})
 
 
-func DeletePerson(w http.ResponseWriter, r *http.Request) {
+var DeletePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	err := dao.Delete(params["id"])
 	if err != nil {
@@ -75,7 +99,7 @@ func DeletePerson(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
-}
+})
 
 
 func respondWithError(w http.ResponseWriter, code int, msg string) {
@@ -101,11 +125,12 @@ func init() {
 
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/people", GetPeople).Methods("GET")
-	router.HandleFunc("/people/{id}", UpdatePerson).Methods("PUT")
-	router.HandleFunc("/people/{id}", GetPerson).Methods("GET")
-	router.HandleFunc("/people", CreatePerson).Methods("POST")
-	router.HandleFunc("/people/{id}", DeletePerson).Methods("DELETE")
+	router.Handle("/get-token", GetToken).Methods("GET")
+	router.Handle("/people", GetPeople).Methods("GET")
+	router.Handle("/people/{id}", jwtMiddleware.Handler(UpdatePerson)).Methods("PUT")
+	router.Handle("/people/{id}", GetPerson).Methods("GET")
+	router.Handle("/people", jwtMiddleware.Handler(CreatePerson)).Methods("POST")
+	router.Handle("/people/{id}", jwtMiddleware.Handler(DeletePerson)).Methods("DELETE")
 	if err := http.ListenAndServe(":8000", router); err != nil {
 		log.Fatal(err)
 	}
