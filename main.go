@@ -23,8 +23,8 @@ var mySigningKey = []byte("secret")
 var GetToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-    claims["admin"] = true
-    claims["name"] = "Ado Kukic"
+	claims["admin"] = true
+	claims["name"] = "Pepe LePeux"
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 	tokenString, _ := token.SignedString(mySigningKey)
 	w.Write([]byte(tokenString))
