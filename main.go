@@ -126,9 +126,9 @@ func init() {
 func main() {
 	router := mux.NewRouter()
 	router.Handle("/get-token", GetToken).Methods("GET")
-	router.Handle("/people", GetPeople).Methods("GET")
+	router.Handle("/people", jwtMiddleware.Handler(GetPeople)).Methods("GET")
 	router.Handle("/people/{id}", jwtMiddleware.Handler(UpdatePerson)).Methods("PUT")
-	router.Handle("/people/{id}", GetPerson).Methods("GET")
+	router.Handle("/people/{id}", jwtMiddleware.Handler(GetPerson)).Methods("GET")
 	router.Handle("/people", jwtMiddleware.Handler(CreatePerson)).Methods("POST")
 	router.Handle("/people/{id}", jwtMiddleware.Handler(DeletePerson)).Methods("DELETE")
 	if err := http.ListenAndServe(":8000", router); err != nil {
