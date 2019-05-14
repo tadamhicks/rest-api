@@ -9,7 +9,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-// The struct for a person
+// PersonDAO is the struct for a person
 type PersonDAO struct {
 	Server   string
 	Port     string

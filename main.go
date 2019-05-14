@@ -11,14 +11,13 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"github.com/kelseyhightower/envconfig"
-	. "github.com/tadamhicks/rest-api/config"
-	. "github.com/tadamhicks/rest-api/dao"
-	. "github.com/tadamhicks/rest-api/models"
+	"github.com/tadamhicks/rest-api/dao"
+	"github.com/tadamhicks/rest-api/models"
 	"gopkg.in/mgo.v2/bson"
 )
 
 //var config = Config{}
-var dao = PersonDAO{}
+var pao = dao.PersonDAO{}
 var mySigningKey = []byte("secret")
 
 type Config struct {
@@ -47,7 +46,7 @@ var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 })
 
 var GetPeople = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	person, err := dao.FindAll()
+	person, err := pao.FindAll()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -58,12 +57,12 @@ var GetPeople = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 var UpdatePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	defer r.Body.Close()
-	var person Person
+	var person models.Person
 	if err := json.NewDecoder(r.Body).Decode(&person); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
-	if err := dao.Update(params["id"], person); err != nil {
+	if err := pao.Update(params["id"], person); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
 	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
@@ -71,7 +70,7 @@ var UpdatePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 
 var GetPerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	person, err := dao.FindById(params["id"])
+	person, err := pao.FindById(params["id"])
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid Person ID")
 		return
@@ -81,13 +80,13 @@ var GetPerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 var CreatePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	var person Person
+	var person models.Person
 	if err := json.NewDecoder(r.Body).Decode(&person); err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 	person.ID = bson.NewObjectId()
-	if err := dao.Insert(person); err != nil {
+	if err := pao.Insert(person); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -96,7 +95,7 @@ var CreatePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 
 var DeletePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	err := dao.Delete(params["id"])
+	err := pao.Delete(params["id"])
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid Person ID")
 		return
@@ -126,11 +125,11 @@ func init() {
 		//log.Fatalf("Failed to parse ENV")
 	}
 	output := strings.Join([]string{c.Server, c.Port}, ":")
-	dao.Server = output
-	dao.Database = c.Database
-	dao.Username = c.Username
-	dao.Password = c.Password
-	dao.Connect()
+	pao.Server = output
+	pao.Database = c.Database
+	pao.Username = c.Username
+	pao.Password = c.Password
+	pao.Connect()
 
 }
 
