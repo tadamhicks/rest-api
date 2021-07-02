@@ -27,6 +27,12 @@ type Config struct {
 	Password string `required:"true"`
 }
 
+type HoneyCfg struct {
+	Apikey      string `required:"true`
+	Dataset     string `required:"true"`
+	Servicename string `required:"true"`
+}
+
 /*
 var GetToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	token := jwt.New(jwt.SigningMethodHS256)
@@ -117,15 +123,20 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func init() {
-	//config.Read()
-	//fmt.Println("CONFIG:\n")
-	//fmt.Printf("%+v\n", config)
-	var c Config
-	err := envconfig.Process("mongo", &c)
+	var h HoneyCfg
+	err := envconfig.Process("honeycomb", &h)
 	if err != nil {
 		log.Fatal(err.Error())
 		//log.Fatalf("Failed to parse ENV")
 	}
+
+	var c Config
+	err = envconfig.Process("mongo", &c)
+	if err != nil {
+		log.Fatal(err.Error())
+		//log.Fatalf("Failed to parse ENV")
+	}
+
 	output := strings.Join([]string{c.Server, c.Port}, ":")
 	pao.Server = output
 	pao.Database = c.Database
@@ -134,9 +145,9 @@ func init() {
 	pao.Connect()
 
 	beeline.Init(beeline.Config{
-		WriteKey:    c.Honeycombkey,
-		Dataset:     c.Honeycombdataset,
-		ServiceName: c.Servicename,
+		WriteKey:    h.Apikey,
+		Dataset:     h.Dataset,
+		ServiceName: h.Servicename,
 		STDOUT:      true,
 	})
 }
