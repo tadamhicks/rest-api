@@ -74,6 +74,7 @@ var UpdatePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 	if err := pao.Update(params["id"], person); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
+	beeline.AddField(r.Context(), "person", person)
 	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
 })
 
@@ -84,6 +85,7 @@ var GetPerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Invalid Person ID")
 		return
 	}
+	beeline.AddField(r.Context(), "person", person)
 	respondWithJson(w, http.StatusOK, person)
 })
 
@@ -99,6 +101,7 @@ var CreatePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+	beeline.AddField(r.Context(), "person", person)
 	respondWithJson(w, http.StatusCreated, person)
 })
 
@@ -109,6 +112,7 @@ var DeletePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusBadRequest, "Invalid Person ID")
 		return
 	}
+	beeline.AddField(r.Context(), "id", params["id"])
 	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
 })
 
