@@ -8,6 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 	beeline "github.com/honeycombio/beeline-go"
+	"github.com/honeycombio/beeline-go/wrappers/hnygorilla"
 	"github.com/honeycombio/beeline-go/wrappers/hnynethttp"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/tadamhicks/rest-api/dao"
@@ -123,15 +124,8 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func init() {
-	var h HoneyCfg
-	err := envconfig.Process("honeycomb", &h)
-	if err != nil {
-		log.Fatal(err.Error())
-		//log.Fatalf("Failed to parse ENV")
-	}
-
 	var c Config
-	err = envconfig.Process("mongo", &c)
+	err := envconfig.Process("mongo", &c)
 	if err != nil {
 		log.Fatal(err.Error())
 		//log.Fatalf("Failed to parse ENV")
@@ -144,22 +138,23 @@ func init() {
 	pao.Password = c.Password
 	pao.Connect()
 
+}
+
+func main() {
+	var h HoneyCfg
+	err := envconfig.Process("honeycomb", &h)
+	if err != nil {
+		log.Fatal(err.Error())
+		//log.Fatalf("Failed to parse ENV")
+	}
 	beeline.Init(beeline.Config{
 		WriteKey:    h.Apikey,
 		Dataset:     h.Dataset,
 		ServiceName: h.Servicename,
-		STDOUT:      true,
 	})
-}
-
-func main() {
-	beeline.Init(beeline.Config{
-		WriteKey:    "c4b05d6b2259d9d6fca768d4ba9c811a",
-		Dataset:     "restful-sleep",
-		ServiceName: "restful-sleep-svc",
-		STDOUT:      true,
-	})
+	defer beeline.Close()
 	router := mux.NewRouter()
+	router.Use(hnygorilla.Middleware)
 	//router.Handle("/get-token", GetToken).Methods("GET")
 	router.Handle("/people", GetPeople).Methods("GET")
 	router.Handle("/people/{id}", UpdatePerson).Methods("PUT")
