@@ -5,11 +5,10 @@ import (
 	"log"
 	"net/http"
 	"strings"
-	"time"
 
-	jwtmiddleware "github.com/auth0/go-jwt-middleware"
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
+	beeline "github.com/honeycombio/beeline-go"
+	"github.com/honeycombio/beeline-go/wrappers/hnynethttp"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/tadamhicks/rest-api/dao"
 	"github.com/tadamhicks/rest-api/models"
@@ -28,6 +27,7 @@ type Config struct {
 	Password string `required:"true"`
 }
 
+/*
 var GetToken = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -44,8 +44,10 @@ var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 	},
 	SigningMethod: jwt.SigningMethodHS256,
 })
+*/
 
 var GetPeople = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	beeline.AddField(r.Context(), "email", "one@two.com")
 	person, err := pao.FindAll()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -131,17 +133,29 @@ func init() {
 	pao.Password = c.Password
 	pao.Connect()
 
+	beeline.Init(beeline.Config{
+		WriteKey:    c.Honeycombkey,
+		Dataset:     c.Honeycombdataset,
+		ServiceName: c.Servicename,
+		STDOUT:      true,
+	})
 }
 
 func main() {
+	beeline.Init(beeline.Config{
+		WriteKey:    "c4b05d6b2259d9d6fca768d4ba9c811a",
+		Dataset:     "restful-sleep",
+		ServiceName: "restful-sleep-svc",
+		STDOUT:      true,
+	})
 	router := mux.NewRouter()
-	router.Handle("/get-token", GetToken).Methods("GET")
-	router.Handle("/people", jwtMiddleware.Handler(GetPeople)).Methods("GET")
-	router.Handle("/people/{id}", jwtMiddleware.Handler(UpdatePerson)).Methods("PUT")
-	router.Handle("/people/{id}", jwtMiddleware.Handler(GetPerson)).Methods("GET")
-	router.Handle("/people", jwtMiddleware.Handler(CreatePerson)).Methods("POST")
-	router.Handle("/people/{id}", jwtMiddleware.Handler(DeletePerson)).Methods("DELETE")
-	if err := http.ListenAndServe(":8000", router); err != nil {
+	//router.Handle("/get-token", GetToken).Methods("GET")
+	router.Handle("/people", GetPeople).Methods("GET")
+	router.Handle("/people/{id}", UpdatePerson).Methods("PUT")
+	router.Handle("/people/{id}", GetPerson).Methods("GET")
+	router.Handle("/people", CreatePerson).Methods("POST")
+	router.Handle("/people/{id}", DeletePerson).Methods("DELETE")
+	if err := http.ListenAndServe(":8000", hnynethttp.WrapHandler(router)); err != nil {
 		log.Fatal(err)
 	}
 }

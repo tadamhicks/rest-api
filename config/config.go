@@ -18,11 +18,14 @@ type Config struct {
 */
 
 type Config struct {
-	Server   string `env:"MONGO_IP"`
-	Port     string `env:"MONGO_PORT"`
-	Database string `env:"RESTING_DB"`
-	Username string `env:"RESTING_DB_USER"`
-	Password string `env:"RESTING_DB_PASSWORD"`
+	Server           string `env:"MONGO_IP"`
+	Port             string `env:"MONGO_PORT"`
+	Database         string `env:"RESTING_DB"`
+	Username         string `env:"RESTING_DB_USER"`
+	Password         string `env:"RESTING_DB_PASSWORD"`
+	Honeycombkey     string `env:"HONEYCOMB_API_KEY"`
+	Honeycombdataset string `env:"HONEYCOMB_DATASET"`
+	Servicename      string `env:"SERVICE_NAME"`
 }
 
 /*
