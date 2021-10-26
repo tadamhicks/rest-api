@@ -307,8 +307,11 @@ github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
 github.com/zenazn/goji v0.9.0/go.mod h1:7S9M489iMyHBNxwZnk9/EHS098H4/F6TATF2mIxtB1Q=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
+go.opentelemetry.io/contrib v0.20.0 h1:ubFQUn0VCZ0gPwIoJfBJVpeBlyRMxu8Mm/huKWYd9p0=
 go.opentelemetry.io/contrib v0.20.0/go.mod h1:G/EtFaa6qaN7+LxqfIAT3GiZa7Wv5DTBUzl5H4LY0Kc=
 go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.20.0/go.mod h1:pYsip5LJxr3Ty4I4i0gOXtiO3cxemma9EnvK6GqwQnw=
+go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.25.0 h1:BYtVZSyHPa91wMWrP/SxgzvUtlk8irH1DbKsednet30=
+go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux v0.25.0/go.mod h1:tD0bs9fXjE9znnBNuWfawp6IJlIsm1+ES0SMISpGBQ0=
 go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.20.0/go.mod h1:oVGt1LRbBOBq1A5BQLlUg9UaU/54aiHw8cgjV3aWZ/E=
 go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.20.0/go.mod h1:2AboqHi0CiIZU0qwhtUfCYD1GeUzvvIXWNkhDt7ZMG4=
 go.opentelemetry.io/contrib/propagators v0.20.0 h1:IrLQng5Z7AfzkS4sEsYaj2ejkO4FCkgKdAr1aYKOfNc=
