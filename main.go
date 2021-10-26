@@ -7,13 +7,21 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	beeline "github.com/honeycombio/beeline-go"
-	"github.com/honeycombio/beeline-go/wrappers/hnygorilla"
-	"github.com/honeycombio/beeline-go/wrappers/hnynethttp"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/tadamhicks/rest-api/dao"
 	"github.com/tadamhicks/rest-api/models"
 	"gopkg.in/mgo.v2/bson"
+	"go.opentelemetry.io/otel"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	middleware "go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp"
+	"go.opentelemetry.io/otel/exporters/otlp/otlpgrpc"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/trace"
+	"google.golang.org/grpc"
 )
 
 //var config = Config{}
@@ -54,7 +62,7 @@ var jwtMiddleware = jwtmiddleware.New(jwtmiddleware.Options{
 */
 
 var GetPeople = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	beeline.AddField(r.Context(), "email", "one@two.com")
+	//beeline.AddField(r.Context(), "email", "one@two.com")
 	person, err := pao.FindAll()
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -74,7 +82,7 @@ var UpdatePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 	if err := pao.Update(params["id"], person); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
-	beeline.AddField(r.Context(), "person", person)
+	//beeline.AddField(r.Context(), "person", person)
 	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
 })
 
@@ -85,7 +93,7 @@ var GetPerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusBadRequest, "Invalid Person ID")
 		return
 	}
-	beeline.AddField(r.Context(), "person", person)
+	//beeline.AddField(r.Context(), "person", person)
 	respondWithJson(w, http.StatusOK, person)
 })
 
@@ -101,7 +109,7 @@ var CreatePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	beeline.AddField(r.Context(), "person", person)
+	//beeline.AddField(r.Context(), "person", person)
 	respondWithJson(w, http.StatusCreated, person)
 })
 
@@ -112,7 +120,7 @@ var DeletePerson = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusBadRequest, "Invalid Person ID")
 		return
 	}
-	beeline.AddField(r.Context(), "id", params["id"])
+	//beeline.AddField(r.Context(), "id", params["id"])
 	respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
 })
 
@@ -145,27 +153,49 @@ func init() {
 }
 
 func main() {
+	/*
 	var h HoneyCfg
 	err := envconfig.Process("honeycomb", &h)
 	if err != nil {
 		log.Fatal(err.Error())
 		//log.Fatalf("Failed to parse ENV")
 	}
-	beeline.Init(beeline.Config{
-		WriteKey:    h.Apikey,
-		Dataset:     h.Dataset,
-		ServiceName: h.Servicename,
-	})
-	defer beeline.Close()
+	 */
+
 	router := mux.NewRouter()
-	router.Use(hnygorilla.Middleware)
+	//router.Use(hnygorilla.Middleware)
 	//router.Handle("/get-token", GetToken).Methods("GET")
 	router.Handle("/people", GetPeople).Methods("GET")
 	router.Handle("/people/{id}", UpdatePerson).Methods("PUT")
 	router.Handle("/people/{id}", GetPerson).Methods("GET")
 	router.Handle("/people", CreatePerson).Methods("POST")
 	router.Handle("/people/{id}", DeletePerson).Methods("DELETE")
-	if err := http.ListenAndServe(":8000", hnynethttp.WrapHandler(router)); err != nil {
+	if err := http.ListenAndServe(":8000", router); err != nil {
 		log.Fatal(err)
 	}
 }
+/*
+func initOtelTracing(log logrus.FieldLogger) {
+	otlpendpoint := os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT")
+	if otlpendpoint == "" {
+		otlpendpoint = "api.honeycomb.io:443"
+	}
+	ctx := context.Background()
+	//creds := credentials.NewClientTLSFromCert(nil, "")
+	driver := otlpgrpc.NewDriver(
+		otlpgrpc.WithInsecure(),
+		otlpgrpc.WithEndpoint(otlpendpoint))
+	exporter, err := otlp.NewExporter(ctx, driver)
+	if err != nil {
+		log.Fatal(err)
+	}
+	propagator := propagation.NewCompositeTextMapPropagator(propagation.Baggage{}, propagation.TraceContext{})
+	otel.SetTextMapPropagator(propagator)
+	otel.SetTracerProvider(
+		trace.NewTracerProvider(
+			trace.WithSpanProcessor(trace.NewBatchSpanProcessor(exporter)),
+		),
+	)
+}
+
+ */
